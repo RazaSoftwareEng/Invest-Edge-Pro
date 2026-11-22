@@ -6,12 +6,15 @@ import Input from '../components/Input';
 import Notice from '../components/Notice';
 import { Spinner } from '../components/Spinner';
 import { useAuth } from '../context/AuthContext';
+import { getRememberMe, getRememberedUsername, setRememberMe } from '../lib/supabase';
+import { isPreview } from '../lib/preview';
 
 export default function Login() {
-  const { signIn } = useAuth();
+  const { signIn, session } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [form, setForm] = useState(() => ({ username: getRememberedUsername(), password: '' }));
+  const [remember, setRemember] = useState(() => getRememberMe());
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -21,11 +24,16 @@ export default function Login() {
   async function onSubmit(e) {
     e.preventDefault();
     setError('');
+    if (session && isPreview()) {
+      setError('Preview mode — login is disabled. Click "Exit preview" to return.');
+      return;
+    }
     if (!form.username.trim() || !form.password) {
       setError('Please enter your username/email and password.');
       return;
     }
     setBusy(true);
+    setRememberMe(remember, form.username);
     try {
       const res = await signIn(form.username, form.password);
       // Admins land on the admin console, users on their dashboard
@@ -70,6 +78,15 @@ export default function Login() {
           value={form.password}
           onChange={set('password')}
         />
+        <label className="flex cursor-pointer select-none items-center gap-2.5 pl-2">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+            className="h-4 w-4 rounded border-gold-400 accent-maroon-600"
+          />
+          <span className="text-sm text-maroon-800">Remember me</span>
+        </label>
         <button type="submit" className="btn-primary mt-2 w-full py-3.5" disabled={busy}>
           {busy ? <Spinner className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
           {busy ? 'Signing in…' : 'Login'}

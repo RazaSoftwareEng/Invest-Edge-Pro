@@ -41,8 +41,8 @@ begin
   if not public.is_admin() then
     raise exception 'Not authorized';
   end if;
-  if v_username !~ '^[A-Za-z0-9_]{3,20}$' then
-    raise exception 'Username must be 3-20 letters, numbers or underscore';
+  if v_username !~ '^[A-Za-z0-9_]{3,15}$' then
+    raise exception 'Username must be 3-15 letters, numbers or underscore';
   end if;
 
   select username into v_old from public.profiles where id = p_user_id for update;

@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import PublicOnlyRoute from './components/PublicOnlyRoute';
 import SetupNotice from './components/SetupNotice';
+import ScrollToTop from './components/ScrollToTop';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -25,6 +26,8 @@ export default function App() {
   if (!isSupabaseConfigured) return <SetupNotice />;
 
   return (
+    <>
+    <ScrollToTop />
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
@@ -82,5 +85,6 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
+    </>
   );
 }

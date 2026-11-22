@@ -7,7 +7,7 @@ function friendlyAuthError(error) {
   const msg = error?.message || 'Something went wrong. Please try again.';
   if (/invalid login credentials/i.test(msg)) return 'Incorrect username/email or password.';
   if (/already registered|already exists/i.test(msg)) return 'This username is already taken. Please choose another.';
-  if (/database error saving new user/i.test(msg)) return 'This username is already taken. Please choose another.';
+  if (/database error saving new user/i.test(msg)) return 'This username or email is already registered.';
   if (/email not confirmed/i.test(msg))
     return 'Account not activated. The admin must disable "Confirm email" in Supabase Auth settings.';
   if (/rate limit/i.test(msg)) return 'Too many attempts. Please wait a minute and try again.';
@@ -68,10 +68,13 @@ export function AuthProvider({ children }) {
 
   const signIn = useCallback(
     async (username, password) => {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: usernameToEmail(username),
-        password,
-      });
+      let email = usernameToEmail(username);
+      if (username.includes('@')) {
+        // Typed an email: find the account's internal login email.
+        const { data: loginEmail, error: lookupError } = await supabase.rpc('login_email_for', { p_email: username.trim() });
+        if (!lookupError && loginEmail) email = loginEmail;
+      }
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw new Error(friendlyAuthError(error));
       setSession(data.session);
       const prof = await fetchProfile(data.user.id);
@@ -81,12 +84,19 @@ export function AuthProvider({ children }) {
   );
 
   const signUp = useCallback(
-    async ({ username, phone, password }) => {
+    async ({ email, fullName, username, phone, password }) => {
       const cleanUsername = username.trim();
       const { data, error } = await supabase.auth.signUp({
         email: usernameToEmail(cleanUsername),
         password,
-        options: { data: { username: cleanUsername, phone } },
+        options: {
+          data: {
+            username: cleanUsername,
+            full_name: fullName?.trim() || cleanUsername,
+            phone,
+            email: email?.trim().toLowerCase() || null,
+          },
+        },
       });
       if (error) throw new Error(friendlyAuthError(error));
       if (!data.session) {

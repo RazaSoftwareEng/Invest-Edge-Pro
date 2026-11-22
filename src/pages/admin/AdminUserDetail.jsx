@@ -132,6 +132,7 @@ export default function AdminUserDetail() {
             <p className="text-xs text-gold-200/80">
               @{profile.username} · {profile.phone || 'no phone'}
             </p>
+            {profile.email && <p className="truncate text-xs text-gold-200/80">{profile.email}</p>}
             <p className="text-[11px] text-cream-100/60">
               Joined {formatDate(profile.created_at)} · ID {profile.id.slice(0, 8).toUpperCase()}
             </p>
@@ -324,7 +325,7 @@ function EditProfileModal({ profile, isSelf, run, onClose }) {
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
 
   function submit() {
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(f.username.trim())) return Promise.resolve('Username must be 3–20 letters, numbers or underscore.');
+    if (!/^[a-zA-Z0-9_]{3,15}$/.test(f.username.trim())) return Promise.resolve('Username must be 3–15 letters, numbers or underscore.');
     const phone = f.phone.trim() ? normalizePkPhone(f.phone) : '';
     if (phone === null) return Promise.resolve('Enter a valid mobile number, e.g. 03001234567.');
     return run(

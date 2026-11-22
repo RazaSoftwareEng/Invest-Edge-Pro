@@ -7,6 +7,69 @@ const supabaseAnonKey =
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
+// ---------- "Remember me" ----------
+// Checked   -> session kept in localStorage (stays logged in after closing the browser)
+// Unchecked -> session kept in sessionStorage (logged out when the browser/tab is closed)
+const REMEMBER_KEY = 'iep-remember';
+const LAST_USER_KEY = 'iep-last-user';
+
+export function getRememberMe() {
+  try {
+    return localStorage.getItem(REMEMBER_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
+
+export function setRememberMe(value, username = '') {
+  try {
+    localStorage.setItem(REMEMBER_KEY, value ? '1' : '0');
+    if (value && username) localStorage.setItem(LAST_USER_KEY, username.trim());
+    else localStorage.removeItem(LAST_USER_KEY);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+export function getRememberedUsername() {
+  try {
+    return localStorage.getItem(LAST_USER_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+const authStorage = {
+  getItem(key) {
+    try {
+      return localStorage.getItem(key) ?? sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem(key, value) {
+    try {
+      if (getRememberMe()) {
+        localStorage.setItem(key, value);
+        sessionStorage.removeItem(key);
+      } else {
+        sessionStorage.setItem(key, value);
+        localStorage.removeItem(key);
+      }
+    } catch {
+      /* storage unavailable */
+    }
+  },
+  removeItem(key) {
+    try {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    } catch {
+      /* storage unavailable */
+    }
+  },
+};
+
 // Fallback values only keep the app from crashing before .env is filled in;
 // App.jsx shows a setup screen when isSupabaseConfigured is false.
 export const supabase = createClient(
@@ -17,6 +80,7 @@ export const supabase = createClient(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: false,
+      storage: authStorage,
     },
   },
 );

@@ -1,144 +1,97 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowDownToLine, ArrowUpFromLine, ChevronRight, Crown, Receipt, ShieldCheck, Users, Wallet } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowDownToLine, Eye, LayoutDashboard, LogIn, UserPlus, Users, Wallet } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { formatRs } from '../../lib/format';
+import { startPreview } from '../../lib/preview';
 import PageHeader from '../../components/PageHeader';
-import TransactionRow from '../../components/TransactionRow';
-import EmptyState from '../../components/EmptyState';
 import { CardLoader } from '../../components/Spinner';
 
-const sum = (rows) => (rows ?? []).reduce((s, r) => s + Number(r.amount ?? r.balance ?? 0), 0);
-
 export default function AdminOverview() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
-  const [recent, setRecent] = useState([]);
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const now = new Date().toISOString();
-      const [users, pendDep, pendWd, approvedDep, paidWd, subs, txns] = await Promise.all([
-        supabase.from('profiles').select('id, balance, is_admin'),
-        supabase.from('deposits').select('amount').eq('status', 'pending'),
-        supabase.from('withdrawals').select('amount').eq('status', 'pending'),
+      const [users, deposits] = await Promise.all([
+        supabase.from('profiles').select('balance'),
         supabase.from('deposits').select('amount').eq('status', 'approved'),
-        supabase.from('withdrawals').select('amount').eq('status', 'paid'),
-        supabase.from('subscriptions').select('user_id').gt('expires_at', now),
-        supabase
-          .from('transactions')
-          .select('*, user:profiles(username)')
-          .order('created_at', { ascending: false })
-          .limit(10),
       ]);
       if (!active) return;
       const u = users.data ?? [];
+      const d = deposits.data ?? [];
       setStats({
         users: u.length,
-        admins: u.filter((x) => x.is_admin).length,
-        wallets: u.reduce((s, x) => s + Number(x.balance || 0), 0),
-        pendingDeposits: { count: pendDep.data?.length ?? 0, amount: sum(pendDep.data) },
-        pendingWithdrawals: { count: pendWd.data?.length ?? 0, amount: sum(pendWd.data) },
-        approvedDeposits: sum(approvedDep.data),
-        paidWithdrawals: sum(paidWd.data),
-        activeMembers: new Set((subs.data ?? []).map((s) => s.user_id)).size,
+        deposits: d.reduce((s, x) => s + Number(x.amount || 0), 0),
+        depositCount: d.length,
+        amount: u.reduce((s, x) => s + Number(x.balance || 0), 0),
       });
-      setRecent(txns.data ?? []);
     })();
     return () => {
       active = false;
     };
   }, []);
 
+  function preview(path) {
+    startPreview();
+    navigate(path);
+  }
+
   return (
     <div className="space-y-5">
-      <PageHeader title="Overview" subtitle="Platform summary at a glance" />
+      <PageHeader title="Dashboard" subtitle="Overall platform stats" />
 
       {!stats ? (
         <div className="card">
           <CardLoader />
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3">
-            <ActionTile
-              to="/admin/deposits"
-              icon={ArrowDownToLine}
-              label="Pending deposits"
-              count={stats.pendingDeposits.count}
-              amount={stats.pendingDeposits.amount}
-            />
-            <ActionTile
-              to="/admin/withdrawals"
-              icon={ArrowUpFromLine}
-              label="Pending withdrawals"
-              count={stats.pendingWithdrawals.count}
-              amount={stats.pendingWithdrawals.amount}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Stat icon={Users} label="Total users" value={stats.users} sub={`${stats.admins} admin(s)`} to="/admin/users" />
-            <Stat icon={Crown} label="Active members" value={stats.activeMembers} sub="with a running plan" />
-            <Stat icon={Wallet} label="User wallets" value={formatRs(stats.wallets)} sub="total balance held" />
-            <Stat icon={ArrowDownToLine} label="Deposits approved" value={formatRs(stats.approvedDeposits)} sub="all time" />
-            <Stat icon={ArrowUpFromLine} label="Withdrawals paid" value={formatRs(stats.paidWithdrawals)} sub="all time" />
-            <Stat icon={ShieldCheck} label="Net cash in" value={formatRs(stats.approvedDeposits - stats.paidWithdrawals)} sub="deposits − payouts" />
-          </div>
-        </>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatCard icon={Users} label="Total Users" value={stats.users.toLocaleString('en-PK')} sub="registered accounts" />
+          <StatCard
+            icon={ArrowDownToLine}
+            label="Total Deposits"
+            value={formatRs(stats.deposits)}
+            sub={`${stats.depositCount} approved deposit${stats.depositCount === 1 ? '' : 's'}`}
+          />
+          <StatCard icon={Wallet} label="Total Amount" value={formatRs(stats.amount)} sub="held in user wallets" />
+        </div>
       )}
 
       <section className="card">
         <h2 className="section-title mb-1 flex items-center gap-2">
-          <Receipt className="h-5 w-5 text-gold-600" /> Latest Activity (all users)
+          <Eye className="h-5 w-5 text-gold-600" /> Guest Preview
         </h2>
-        {!stats ? (
-          <CardLoader />
-        ) : recent.length === 0 ? (
-          <EmptyState title="No activity yet" />
-        ) : (
-          <ul className="divide-y divide-gold-400/30">
-            {recent.map((t) => (
-              <TransactionRow key={t.id} txn={t} showUser />
-            ))}
-          </ul>
-        )}
+        <p className="mb-4 text-xs text-maroon-800/70">
+          See the app exactly as users and visitors see it. A gold banner lets you exit back to the admin console.
+        </p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <button type="button" className="btn-primary" onClick={() => preview('/dashboard')}>
+            <LayoutDashboard className="h-4 w-4" /> User App
+          </button>
+          <button type="button" className="btn-outline" onClick={() => preview('/login')}>
+            <LogIn className="h-4 w-4" /> Login Page
+          </button>
+          <button type="button" className="btn-outline" onClick={() => preview('/register')}>
+            <UserPlus className="h-4 w-4" /> Register Page
+          </button>
+        </div>
       </section>
     </div>
   );
 }
 
-function ActionTile({ to, icon: Icon, label, count, amount }) {
+function StatCard({ icon: Icon, label, value, sub }) {
   return (
-    <Link
-      to={to}
-      className={`card-dark flex flex-col gap-1 p-4 transition hover:brightness-110 ${count > 0 ? 'ring-2 ring-gold-400' : ''}`}
-    >
-      <div className="flex items-center justify-between">
+    <div className="card-dark relative overflow-hidden">
+      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gold-400/15 blur-2xl" />
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-gold-400/60 bg-maroon-950/40">
         <Icon className="h-5 w-5 text-gold-300" />
-        <ChevronRight className="h-4 w-4 text-gold-300/70" />
       </div>
-      <p className="font-display text-3xl font-bold gold-text">{count}</p>
-      <p className="text-xs text-cream-100/80">{label}</p>
-      <p className="text-[11px] text-gold-200/70">{formatRs(amount)}</p>
-    </Link>
-  );
-}
-
-function Stat({ icon: Icon, label, value, sub, to }) {
-  const body = (
-    <>
-      <Icon className="mb-1 h-4 w-4 text-maroon-600" />
-      <p className="text-lg font-bold text-maroon-900">{value}</p>
-      <p className="text-xs font-semibold text-maroon-800">{label}</p>
-      <p className="text-[10px] text-maroon-800/60">{sub}</p>
-    </>
-  );
-  return to ? (
-    <Link to={to} className="card p-3.5 transition hover:brightness-105">
-      {body}
-    </Link>
-  ) : (
-    <div className="card p-3.5">{body}</div>
+      <p className="text-xs uppercase tracking-[0.2em] text-gold-200/80">{label}</p>
+      <p className="mt-1 break-words font-display text-3xl font-bold gold-text">{value}</p>
+      <p className="mt-1 text-[11px] text-cream-100/60">{sub}</p>
+    </div>
   );
 }

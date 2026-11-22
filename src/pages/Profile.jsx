@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AtSign, ChevronRight, KeyRound, Lock, LogOut, Phone, Save, ShieldCheck, User } from 'lucide-react';
+import { AtSign, ChevronRight, KeyRound, Lock, LogOut, Mail, Phone, Save, ShieldCheck, User } from 'lucide-react';
 import { supabase, friendlyDbError } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { formatDate, formatRs, initials, normalizePkPhone } from '../lib/format';
@@ -112,6 +112,7 @@ export default function Profile() {
           onClose={() => setInfoNotice({ type: 'info', message: '' })}
         />
         <Input icon={AtSign} label="Username" value={username} disabled readOnly hint="Username cannot be changed." />
+        {profile?.email && <Input icon={Mail} label="Email" value={profile.email} disabled readOnly />}
         <Input
           icon={User}
           label="Full Name"

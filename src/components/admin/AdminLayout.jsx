@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowDownToLine, ArrowUpFromLine, Gem, LayoutDashboard, LogOut, Smartphone, Users } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Eye, Gem, LayoutDashboard, LogOut, Users } from 'lucide-react';
+import { startPreview, stopPreview } from '../../lib/preview';
 import Logo from '../Logo';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { APP_NAME } from '../../config';
 
 const NAV = [
-  { to: '/admin', end: true, label: 'Overview', icon: LayoutDashboard },
+  { to: '/admin', end: true, label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/deposits', label: 'Deposits', icon: ArrowDownToLine, badge: 'deposits' },
   { to: '/admin/withdrawals', label: 'Withdraws', icon: ArrowUpFromLine, badge: 'withdrawals' },
   { to: '/admin/plans', label: 'Plans', icon: Gem },
@@ -20,6 +21,16 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [pending, setPending] = useState({ deposits: 0, withdrawals: 0 });
+
+  // Back in the console => leave Guest Preview mode
+  useEffect(() => {
+    stopPreview();
+  }, []);
+
+  function openPreview() {
+    startPreview();
+    navigate('/dashboard');
+  }
 
   useEffect(() => {
     let active = true;
@@ -54,13 +65,14 @@ export default function AdminLayout() {
           </Link>
           <div className="flex items-center gap-2">
             <span className="hidden text-xs text-gold-200/70 sm:inline">@{profile?.username}</span>
-            <Link
-              to="/dashboard"
+            <button
+              type="button"
+              onClick={openPreview}
               className="inline-flex items-center gap-1 rounded-full border border-gold-400/50 px-3 py-1.5 text-xs font-semibold text-gold-200 transition hover:bg-maroon-800"
-              title="Open the user app"
+              title="Preview the user app"
             >
-              <Smartphone className="h-3.5 w-3.5" /> User App
-            </Link>
+              <Eye className="h-3.5 w-3.5" /> Preview
+            </button>
             <button
               type="button"
               onClick={logout}

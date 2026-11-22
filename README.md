@@ -47,7 +47,7 @@ Invest Edge Pro/
 
 ### 3. Run the SQL
 **SQL Editor → New query** → paste the whole of [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
-Then open another **New query**, paste [`supabase/admin_users.sql`](supabase/admin_users.sql) and **Run** it too (admin user-management functions).
+Then open another **New query**, paste [`supabase/admin_users.sql`](supabase/admin_users.sql) and **Run** it, then do the same with [`supabase/email_login.sql`](supabase/email_login.sql) (admin tools + email login).
 The first file creates the tables, triggers, RLS policies, money functions, the private `proofs` storage bucket + its policies, and 4 sample plans.
 
 ### 4. Check the storage bucket

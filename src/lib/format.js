@@ -44,6 +44,18 @@ export function methodName(id) {
   return PAYMENT_METHODS.find((m) => m.id === id)?.name ?? id;
 }
 
+/** "ali.raza_92@gmail.com" -> "Ali Raza" (words from the part before @, digits removed, capitalised) */
+export function nameFromEmail(email) {
+  return String(String(email || '').split('@')[0] || '')
+    .replace(/[0-9]+/g, ' ')
+    .split(/[._\-+\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ')
+    .slice(0, 40)
+    .trim();
+}
+
 /** Accepts 03XXXXXXXXX, 3XXXXXXXXX, +923XXXXXXXXX, 923XXXXXXXXX (spaces/dashes allowed). Returns 03XXXXXXXXX or null. */
 export function normalizePkPhone(input) {
   const digits = String(input || '').replace(/[\s-]/g, '').replace(/^\+/, '');
