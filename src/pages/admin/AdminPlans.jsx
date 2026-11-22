@@ -22,7 +22,7 @@ export default function AdminPlans() {
   const [togglingId, setTogglingId] = useState(null);
 
   const load = useCallback(async () => {
-    const { data, error: err } = await supabase.from('plans').select('*').order('sort_order').order('price');
+    const { data, error: err } = await supabase.from('plans').select('*').order('price', { ascending: true }).order('sort_order');
     setError(err ? friendlyDbError(err) : '');
     setPlans(data ?? []);
     setLoading(false);

@@ -1,5 +1,6 @@
 import { ArrowDownLeft, ArrowUpRight, RotateCcw, ShoppingBag, SlidersHorizontal } from 'lucide-react';
 import { formatDateTime, formatSignedRs } from '../lib/format';
+import StatusBadge from './StatusBadge';
 
 const META = {
   deposit: { icon: ArrowDownLeft, label: 'Deposit', iconCls: 'bg-emerald-100 text-emerald-700' },
@@ -9,7 +10,11 @@ const META = {
   adjustment: { icon: SlidersHorizontal, label: 'Adjustment', iconCls: 'bg-violet-100 text-violet-700' },
 };
 
-/** `showUser` prints the owner's @username (admin views; expects txn.user.username). */
+/**
+ * `showUser` prints the owner's @username (admin views; expects txn.user.username).
+ * Optional `txn.status` shows a Pending/Approved/Paid/Rejected badge;
+ * `txn.isRequest` marks a deposit request that has not moved money yet.
+ */
 export default function TransactionRow({ txn, showUser = false }) {
   const meta = META[txn.type] ?? META.deposit;
   const Icon = meta.icon;
@@ -28,8 +33,21 @@ export default function TransactionRow({ txn, showUser = false }) {
         {txn.note && <p className="truncate text-xs text-maroon-800/65">{txn.note}</p>}
         <p className="text-[11px] text-maroon-800/50">{formatDateTime(txn.created_at)}</p>
       </div>
-      <div className="text-right">
-        <p className={`text-sm font-bold ${amount >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>{formatSignedRs(amount)}</p>
+      <div className="flex flex-col items-end gap-1 text-right">
+        <p
+          className={`text-sm font-bold ${
+            txn.isRequest
+              ? txn.status === 'rejected'
+                ? 'text-maroon-800/40 line-through'
+                : 'text-amber-700'
+              : amount >= 0
+                ? 'text-emerald-700'
+                : 'text-red-600'
+          }`}
+        >
+          {formatSignedRs(amount)}
+        </p>
+        {txn.status && <StatusBadge status={txn.status} />}
         {txn.balance_after != null && (
           <p className="text-[10px] text-maroon-800/50">Bal: Rs {Number(txn.balance_after).toLocaleString('en-PK')}</p>
         )}

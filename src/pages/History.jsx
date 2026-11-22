@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Receipt } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { methodName } from '../lib/format';
 import PageHeader from '../components/PageHeader';
 import TransactionRow from '../components/TransactionRow';
 import EmptyState from '../components/EmptyState';
@@ -54,6 +55,35 @@ export default function History() {
     };
   }, [fetchPage]);
 
+  // Deposits that haven't moved money yet (pending / rejected) + withdrawal statuses
+  const [depositRequests, setDepositRequests] = useState([]);
+  const [withdrawalStatus, setWithdrawalStatus] = useState({});
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      supabase
+        .from('deposits')
+        .select('id, method, amount, transaction_id, status, admin_note, created_at')
+        .eq('user_id', user.id)
+        .in('status', ['pending', 'rejected'])
+        .order('created_at', { ascending: false })
+        .limit(100),
+      supabase.from('withdrawals').select('id, status').eq('user_id', user.id).limit(500),
+    ]).then(([dep, wd]) => {
+      if (!active) return;
+      setDepositRequests(dep.data ?? []);
+      const map = {};
+      (wd.data ?? []).forEach((w) => {
+        map[w.id] = w.status;
+      });
+      setWithdrawalStatus(map);
+    });
+    return () => {
+      active = false;
+    };
+  }, [user.id]);
+
   async function loadMore() {
     setLoadingMore(true);
     const data = await fetchPage(rows.length);
@@ -61,6 +91,30 @@ export default function History() {
     setHasMore(data.length === PAGE_SIZE);
     setLoadingMore(false);
   }
+
+  const display = useMemo(() => {
+    const txns = rows.map((t) => ({
+      ...t,
+      status: t.type === 'withdrawal' ? withdrawalStatus[t.ref_id] : undefined,
+    }));
+    if (filter !== 'all' && filter !== 'deposit') return txns;
+
+    // Only merge requests inside the loaded date range (older ones appear after "Load more")
+    const oldest = hasMore && rows.length ? rows[rows.length - 1].created_at : null;
+    const requests = depositRequests
+      .filter((d) => !oldest || d.created_at >= oldest)
+      .map((d) => ({
+        id: `dep-${d.id}`,
+        type: 'deposit',
+        amount: d.amount,
+        note: `${methodName(d.method)} · TID ${d.transaction_id}${d.status === 'rejected' && d.admin_note ? ` — ${d.admin_note}` : ''}`,
+        created_at: d.created_at,
+        balance_after: null,
+        status: d.status,
+        isRequest: true,
+      }));
+    return [...txns, ...requests].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }, [rows, depositRequests, withdrawalStatus, filter, hasMore]);
 
   const totals = rows.reduce(
     (acc, t) => {
@@ -105,12 +159,12 @@ export default function History() {
       <section className="card">
         {loading ? (
           <CardLoader />
-        ) : rows.length === 0 ? (
+        ) : display.length === 0 ? (
           <EmptyState icon={Receipt} title="No transactions found" text="Transactions appear here once you deposit, buy a plan or withdraw." />
         ) : (
           <>
             <ul className="divide-y divide-gold-400/30">
-              {rows.map((t) => (
+              {display.map((t) => (
                 <TransactionRow key={t.id} txn={t} />
               ))}
             </ul>

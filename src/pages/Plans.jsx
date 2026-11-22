@@ -25,7 +25,7 @@ export default function Plans() {
 
   const load = useCallback(async () => {
     const [plansRes, subRes] = await Promise.all([
-      supabase.from('plans').select('*').eq('active', true).order('sort_order').order('price'),
+      supabase.from('plans').select('*').eq('active', true).order('price', { ascending: true }).order('sort_order'),
       supabase
         .from('subscriptions')
         .select('*')

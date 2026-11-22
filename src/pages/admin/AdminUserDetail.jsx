@@ -54,7 +54,7 @@ export default function AdminUserDetail() {
       supabase.from('transactions').select('*').eq('user_id', id).order('created_at', { ascending: false }).limit(50),
       supabase.from('deposits').select('*').eq('user_id', id).order('created_at', { ascending: false }).limit(50),
       supabase.from('withdrawals').select('*').eq('user_id', id).order('created_at', { ascending: false }).limit(50),
-      supabase.from('plans').select('*').order('sort_order').order('price'),
+      supabase.from('plans').select('*').order('price', { ascending: true }).order('sort_order'),
     ]);
     setData({
       profile: p.data,
