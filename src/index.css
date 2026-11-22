@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply font-sans text-maroon-950 antialiased;
+    background-color: #3d0010;
+    background-image: radial-gradient(ellipse at 50% -10%, #8a1230 0%, #5e0722 45%, #3d0010 100%);
+    background-attachment: fixed;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-3xl border border-gold-400/60 bg-gradient-to-br from-cream-50 to-cream-100 p-5 shadow-card;
+  }
+
+  .card-dark {
+    @apply rounded-3xl border border-gold-400/50 bg-gradient-to-br from-maroon-600 via-maroon-700 to-maroon-900 p-5 text-cream-50 shadow-card;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-maroon-600 to-maroon-900 px-6 py-3 text-sm font-semibold text-gold-200 shadow-lg shadow-maroon-950/40 ring-1 ring-gold-400/50 transition hover:brightness-110 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-gold-200 via-gold-400 to-gold-500 px-6 py-3 text-sm font-semibold text-maroon-900 shadow-lg shadow-maroon-950/30 transition hover:brightness-105 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-maroon-600/40 bg-white/60 px-5 py-2.5 text-sm font-semibold text-maroon-700 transition hover:bg-white active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-red-600 to-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:brightness-110 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-success {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-800 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:brightness-110 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .input-field {
+    @apply w-full rounded-full border border-gold-400/70 bg-white/85 py-3 text-sm text-maroon-950 outline-none transition placeholder:text-maroon-900/40 focus:border-maroon-600 focus:ring-2 focus:ring-gold-400/50 disabled:bg-cream-100 disabled:text-maroon-900/60;
+  }
+
+  .textarea-field {
+    @apply w-full rounded-2xl border border-gold-400/70 bg-white/85 px-4 py-3 text-sm text-maroon-950 outline-none transition placeholder:text-maroon-900/40 focus:border-maroon-600 focus:ring-2 focus:ring-gold-400/50;
+  }
+
+  .label {
+    @apply mb-1.5 block pl-2 text-xs font-semibold uppercase tracking-wider text-maroon-800/70;
+  }
+
+  .section-title {
+    @apply font-display text-lg font-bold text-maroon-900;
+  }
+
+  .page-title {
+    @apply font-display text-2xl font-bold text-gold-200;
+  }
+
+  .gold-text {
+    @apply bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent;
+  }
+
+  .chip {
+    @apply whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-semibold transition;
+  }
+  .chip-active {
+    @apply border-gold-400 bg-gold-400 text-maroon-900;
+  }
+  .chip-idle {
+    @apply border-gold-400/40 bg-maroon-950/30 text-gold-200 hover:border-gold-400;
+  }
+
+  .divider {
+    @apply my-4 h-px bg-gradient-to-r from-transparent via-gold-400/60 to-transparent;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+}
